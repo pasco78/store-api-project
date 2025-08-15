@@ -19,6 +19,7 @@ import json
 from datetime import datetime
 import time
 import math
+import random
 from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
 import os
@@ -280,44 +281,77 @@ def display_map_results(results):
         # 서울 중심 좌표
         center_lat, center_lng = 37.5665, 126.9780
         
-        # Folium 지도 생성
+        # Folium 지도 생성 - 간단한 설정
         m = folium.Map(
             location=[center_lat, center_lng],
             zoom_start=11,
-            tiles='OpenStreetMap'
+            tiles='OpenStreetMap',
+            prefer_canvas=True
         )
         
-        # 검색 결과를 지도에 마커로 추가 (최대 100개만)
-        display_count = min(100, len(results))
+        # 검색 결과를 지도에 마커로 추가 (최대 50개로 줄임)
+        display_count = min(50, len(results))
+        
         for i, store in enumerate(results[:display_count]):
-            # 임시로 서울 중심 주변에 랜덤 좌표 생성 (실제 좌표가 없는 경우)
-            import random
-            lat = center_lat + (random.random() - 0.5) * 0.1
-            lng = center_lng + (random.random() - 0.5) * 0.1
+            # 지역별 대략적인 좌표 생성
+            region_coords = {
+                '서울': (37.5665, 126.9780),
+                '부산': (35.1796, 129.0756),
+                '대구': (35.8714, 128.6014),
+                '인천': (37.4563, 126.7052),
+                '광주': (35.1595, 126.8526),
+                '대전': (36.3504, 127.3845),
+                '울산': (35.5384, 129.3114),
+                '세종': (36.4800, 127.2890),
+                '경기': (37.4138, 127.5183),
+                '강원': (37.8228, 128.1555),
+                '충북': (36.8, 127.7),
+                '충남': (36.5, 126.8),
+                '전북': (35.7, 127.1),
+                '전남': (34.8, 126.9),
+                '경북': (36.4, 128.9),
+                '경남': (35.4, 128.3),
+                '제주': (33.4996, 126.5312)
+            }
             
-            popup_text = f"""
-            <b>{store[1]}</b><br>
-            업종: {store[2]}<br>
-            지역: {store[3]} {store[4]}<br>
-            주소: {store[6] or store[7] or 'N/A'}
-            """
+            # 지역에 따른 기본 좌표 설정
+            base_lat, base_lng = center_lat, center_lng
+            region_name = store[3]  # brtcNm
             
-            folium.Marker(
+            for region_key, coords in region_coords.items():
+                if region_key in region_name:
+                    base_lat, base_lng = coords
+                    break
+            
+            # 기본 좌표 주변에 랜덤 좌표 생성
+            lat = base_lat + (random.random() - 0.5) * 0.05
+            lng = base_lng + (random.random() - 0.5) * 0.05
+            
+            # 간단한 팝업 텍스트
+            popup_text = f"{store[1]}<br>{store[2]}<br>{store[3]} {store[4]}"
+            
+            # 마커 추가
+            folium.CircleMarker(
                 location=[lat, lng],
-                popup=folium.Popup(popup_text, max_width=300),
+                radius=8,
+                popup=popup_text,
                 tooltip=store[1],
-                icon=folium.Icon(color='red', icon='info-sign')
+                color='red',
+                fill=True,
+                fillColor='red',
+                fillOpacity=0.6
             ).add_to(m)
         
-        # 지도 표시
-        st_folium(m, width=700, height=500)
+        # 지도 표시 - 더 작은 크기
+        map_data = st_folium(m, width=700, height=400, returned_objects=["last_object_clicked"])
         
         if len(results) > display_count:
             st.info(f"성능을 위해 처음 {display_count}개 업소만 표시됩니다.")
     
     except Exception as e:
-        st.error(f"지도 표시 중 오류가 발생했습니다: {str(e)}")
-        st.info("지도 기능을 사용하려면 인터넷 연결을 확인해주세요.")
+        st.error(f"지도 표시 중 오류: {str(e)}")
+        # 간단한 대체 메시지
+        st.info("🗺️ 지도 기능이 일시적으로 사용할 수 없습니다. 목록 보기를 이용해주세요.")
 
 def display_search_results(results, page=1, items_per_page=10):
     """검색 결과를 카드 형태로 페이지네이션하여 표시"""
