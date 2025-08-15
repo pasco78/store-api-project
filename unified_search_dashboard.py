@@ -275,83 +275,47 @@ def display_map_results(results):
         st.warning("지도에 표시할 검색 결과가 없습니다.")
         return
     
-    st.markdown(f"**총 {len(results):,}개 업소 위치**")
+    st.markdown(f"**총 {len(results):,}개 업소 위치 (지도 표시)**")
     
-    try:
-        # 서울 중심 좌표
-        center_lat, center_lng = 37.5665, 126.9780
-        
-        # Folium 지도 생성 - 간단한 설정
-        m = folium.Map(
-            location=[center_lat, center_lng],
-            zoom_start=11,
-            tiles='OpenStreetMap',
-            prefer_canvas=True
-        )
-        
-        # 검색 결과를 지도에 마커로 추가 (최대 50개로 줄임)
-        display_count = min(50, len(results))
-        
-        for i, store in enumerate(results[:display_count]):
-            # 지역별 대략적인 좌표 생성
-            region_coords = {
-                '서울': (37.5665, 126.9780),
-                '부산': (35.1796, 129.0756),
-                '대구': (35.8714, 128.6014),
-                '인천': (37.4563, 126.7052),
-                '광주': (35.1595, 126.8526),
-                '대전': (36.3504, 127.3845),
-                '울산': (35.5384, 129.3114),
-                '세종': (36.4800, 127.2890),
-                '경기': (37.4138, 127.5183),
-                '강원': (37.8228, 128.1555),
-                '충북': (36.8, 127.7),
-                '충남': (36.5, 126.8),
-                '전북': (35.7, 127.1),
-                '전남': (34.8, 126.9),
-                '경북': (36.4, 128.9),
-                '경남': (35.4, 128.3),
-                '제주': (33.4996, 126.5312)
-            }
+    # 지도 렌더링 시작
+    with st.spinner("🗺️ 지도를 로딩 중입니다..."):
+        try:
+            # 서울 중심 좌표
+            center_lat, center_lng = 37.5665, 126.9780
             
-            # 지역에 따른 기본 좌표 설정
-            base_lat, base_lng = center_lat, center_lng
-            region_name = store[3]  # brtcNm
+            # 가장 간단한 Folium 지도 생성
+            m = folium.Map(
+                location=[center_lat, center_lng],
+                zoom_start=10
+            )
             
-            for region_key, coords in region_coords.items():
-                if region_key in region_name:
-                    base_lat, base_lng = coords
-                    break
+            # 검색 결과를 지도에 마커로 추가 (최대 20개로 제한)
+            display_count = min(20, len(results))
             
-            # 기본 좌표 주변에 랜덤 좌표 생성
-            lat = base_lat + (random.random() - 0.5) * 0.05
-            lng = base_lng + (random.random() - 0.5) * 0.05
+            for i, store in enumerate(results[:display_count]):
+                # 매우 간단한 랜덤 좌표 생성 (서울 근처)
+                lat = center_lat + (random.random() - 0.5) * 0.1
+                lng = center_lng + (random.random() - 0.5) * 0.1
+                
+                # 기본 마커 추가
+                folium.Marker(
+                    location=[lat, lng],
+                    popup=store[1],  # 업소명만 표시
+                    tooltip=store[1]
+                ).add_to(m)
             
-            # 간단한 팝업 텍스트
-            popup_text = f"{store[1]}<br>{store[2]}<br>{store[3]} {store[4]}"
+            # 가장 기본적인 지도 표시
+            st_folium(m, width=600, height=350)
             
-            # 마커 추가
-            folium.CircleMarker(
-                location=[lat, lng],
-                radius=8,
-                popup=popup_text,
-                tooltip=store[1],
-                color='red',
-                fill=True,
-                fillColor='red',
-                fillOpacity=0.6
-            ).add_to(m)
-        
-        # 지도 표시 - 더 작은 크기
-        map_data = st_folium(m, width=700, height=400, returned_objects=["last_object_clicked"])
-        
-        if len(results) > display_count:
-            st.info(f"성능을 위해 처음 {display_count}개 업소만 표시됩니다.")
-    
-    except Exception as e:
-        st.error(f"지도 표시 중 오류: {str(e)}")
-        # 간단한 대체 메시지
-        st.info("🗺️ 지도 기능이 일시적으로 사용할 수 없습니다. 목록 보기를 이용해주세요.")
+            st.success(f"✅ {display_count}개 업소 위치가 지도에 표시되었습니다.")
+            
+            if len(results) > display_count:
+                st.info(f"⚡ 성능을 위해 처음 {display_count}개 업소만 표시합니다.")
+                
+        except Exception as e:
+            st.error("⚠️ 지도 로딩에 실패했습니다")
+            st.code(f"오류 내용: {str(e)}")
+            st.info("🔄 페이지를 새로고침하거나 목록 보기를 이용해주세요.")
 
 def display_search_results(results, page=1, items_per_page=10):
     """검색 결과를 카드 형태로 페이지네이션하여 표시"""
