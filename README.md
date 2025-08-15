@@ -23,12 +23,19 @@
 
 4. **서버 실행**
    ```bash
+   # FastAPI 서버 실행
    python main.py
+   
+   # Streamlit 대시보드 실행
+   streamlit run dashboard.py
+   # 또는
+   python run_dashboard.py
    ```
 
 5. **접속**
-   - 서버: http://localhost:8000
-   - API 문서: http://localhost:8000/docs
+   - **API 서버**: http://localhost:8000
+   - **API 문서**: http://localhost:8000/docs
+   - **📊 대시보드**: http://localhost:8501
 
 ## 📋 데이터베이스 설정
 
@@ -48,11 +55,27 @@
 ⚠️ **보안 주의사항**: 실제 암호는 `.env` 파일에만 저장하고 절대 Git에 커밋하지 마세요!
 
 ## 📁 주요 파일
-- `main.py`: FastAPI 서버
+- `main.py`: FastAPI API 서버
+- `dashboard.py`: Streamlit 대시보드
+- `run_dashboard.py`: 대시보드 실행 스크립트
 - `setup_mariadb.py`: 데이터베이스 설정
 - `models.py`: 데이터베이스 모델
 - `api_client.py`: 공공데이터 API 클라이언트
 - `data_service.py`: 비즈니스 로직
+
+## 📊 대시보드 기능
+
+### 🎯 주요 기능
+- **📈 요약 통계**: 전체 상가업소, 지역, 업종 수
+- **📊 상세 통계**: 업종별/지역별 분포 차트
+- **🗺️ 지도 시각화**: 상가업소 위치 표시
+- **🔍 검색 기능**: 상가명, 업종, 지역별 필터링
+
+### 📱 사용법
+1. **요약 탭**: 전체 현황 한눈에 보기
+2. **통계 탭**: 업종별/지역별 상세 분석
+3. **지도 탭**: 실제 위치 기반 시각화
+4. **검색 탭**: 조건별 상가업소 찾기
 
 ## 📡 API 엔드포인트
 
